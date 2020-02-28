@@ -1,0 +1,89 @@
+.xoxo-game {
+  text-align: center;
+}
+
+.MuiTableCell-root.value-added:active:not(.winning-cell) {
+  background-color: #e48a8a !important;
+}
+
+.MuiTableCell-root.winning-cell {
+  background-color: #33b76e !important;
+}
+
+.xoxo-game-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.xoxo-game-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.login-form a {
+  display: block;
+  margin-bottom: 20px;
+}
+.xoxo-game-link {
+  color: #61dafb;
+}
+
+.xoxo-game table.MuiTable-root tr td {
+    border: 1px solid #555;
+    font-size: 0.5in;
+}
+
+.xoxo-game table.MuiTable-root tr td:hover {
+    background: #eee;
+}
+
+.xoxo-game .MuiTableCell-root, .xoxo-game .MuiTableCell-root:last-child {
+    width: 100px !important;
+    height: 120px !important;
+    padding: 0px;
+}
+
+.back-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.game-is-over {
+  width: 300px;
+  height: 120px;
+  border: 1px solid white;
+  border-radius: 10px;
+  background: rgba(40, 44, 52, 0.95);
+  position: absolute;
+}
+
+.btn-green {
+  background: green;
+}
+
+.btn-red {
+  background: red;
+}
+
+@media only screen and (max-width: 768px) {
+  .no-padding {
+    padding: 0px !important;
+  }
+}
+
+@keyframes xoxo-game-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
