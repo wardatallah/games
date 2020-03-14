@@ -6,7 +6,9 @@ module.exports = {
 		if (globals.apiPort) {
 			url = `${globals.apiHost}:${globals.apiPort}`;
 		}
-		console.log('test', url);
 		return url;
+	},
+	getServerURL: function () {
+		return globals.serverURL;
 	}
 }

@@ -395,7 +395,8 @@ function DecisionDiv(props) {
 }
 
 function ExitDiv() {
-  return (<a href="/game-xoxo-main" className="btn btn-default">Exit</a>);
+  const exitLink = `${utils.getServerURL()}/game-xoxo-main`;
+  return (<a href={exitLink} className="btn btn-default">Exit</a>);
 }
 
 export default XoxoGame;
