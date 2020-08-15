@@ -63,7 +63,9 @@ class XoxoGame extends Component {
         turn: props.data.second_player === '-' ? 'X' : 'O',
         pending: props.data.players_number !== 2,
         myTurn: false,
-        gameEnded:  props.data.game_finished === '1' ? true : false,
+        player1Score: props.data.player1_score || 0,
+        player2Score: props.data.player2_score || 0,
+        gameEnded:  props.data.game_finished === 1 ? true : false,
         waitingMsg: 'Waiting for opponent',
         decisionNum: '0',
         otherPlayerRefused: false
@@ -101,7 +103,9 @@ class XoxoGame extends Component {
       id: this.state.data.id,
       gameNumber: this.state.data.game_number,
       nextTurn: this.state.turn === 'X' && !isNewPlayer ? 'O' : 'X',
-      gameEnded: this.state.gameEnded
+      gameEnded: this.state.gameEnded,
+      player1Score: this.state.player1Score,
+      player2Score: this.state.player2Score,
     };
 
     if (!!rematchOne) {
@@ -117,7 +121,6 @@ class XoxoGame extends Component {
     }).then(function(response) {
       return response.json();
     }).then(function(result) {
-      // ReactDOM.render(<XoxoGame data={result}/>, document.getElementById('root'));
     });
   }
 
@@ -147,12 +150,16 @@ class XoxoGame extends Component {
     });
 
     if (!cellUpdated) return;
-
+    self.setState({
+      myTurn: false,
+    });
     this.updateResult();
   }
 
   refreshData() {
     const self = this;
+
+    if (this.state.myTurn && !this.state.pending && !this.state.gameEnded) return;
     fetch(this.mainUrl + '/xoxo-games/get-game', {
      method: 'post',
      headers: {'Content-Type':'application/json'},
@@ -168,14 +175,26 @@ class XoxoGame extends Component {
         self.state.data.second_player = data.second_player;
       }
 
-      self.setState({myTurn: self.state.turn === data.player_turn});
+      if (self.state.gameEnded && data.game_finished === 0) {
+        self.setState({
+          gameEnded: false,
+        });
+      }
+
+      self.setState({
+        myTurn: self.state.turn === data.player_turn,
+      });
+
+
 
       if (!!data.result) {
         self.setState({
           cellData: JSON.parse(data.result),
-          gameEnded: data.game_finished === 1
         });
-        self.checkWinner();
+
+        if (!self.state.gameEnded) {
+          self.checkWinner();
+        }
       }
       self.rematch(data);
     });
@@ -222,30 +241,42 @@ class XoxoGame extends Component {
       tempData.push(obj.second.value);
       tempData.push(obj.third.value);
     });
-    let gameEnded = false;
 
     const winningSetKeys = _.keys(winningSet);
 
     _.each(winningSetKeys, function (key) {
       if (self.checkValues(tempData, winningSet[key])) {
         self.colorizeWinningCells(winningSet[key]);
-        gameEnded = true;
         return false;
       }
     });
 
     if (numberOfFilledCells === 9) {
-      gameEnded = true;
+      this.setState({gameEnded: true});
+      this.updateResult();
     }
-    this.setState({gameEnded: gameEnded});
   }
 
   colorizeWinningCells(array) {
+    let winner = null;
+
     _.each(array, function (obj) {
       const num = obj + 1;
       let el = document.getElementById('xoxo-cell' + num);
+      winner = el.innerHTML === 'X' ? 1 : 2;
       el.classList.add('winning-cell');
     });
+
+    const playerKey = `player${winner}Score`;
+    const playerScore = this.state[playerKey];
+
+    const attr = {
+      gameEnded: true
+    };
+
+    attr[playerKey] = playerScore + 1;
+    this.setState(attr);
+    this.updateResult();
   }
 
   checkValues(data, array) {
@@ -254,9 +285,9 @@ class XoxoGame extends Component {
   }
 
   componentDidMount() {
-    this.interval = setInterval(() => this.refreshData(), 150);
+    this.interval = setInterval(() => this.refreshData(), 100);
     if (this.state.pending) {
-      this.intervalMsg = setInterval(() => this.updatingWaitingMsg(), 150);
+      this.intervalMsg = setInterval(() => this.updatingWaitingMsg(), 400);
     }
   }
 
@@ -267,9 +298,6 @@ class XoxoGame extends Component {
 
   setCellValue(cell) {
     if (!cell.value) {
-      // let cellEl = document.getElementById(cell.key);
-      // cellEl.innerHTML = this.state.turn;
-      // cellEl.classList.add('value-added');
       cell.value = this.state.turn;
       return true;
     } else {
@@ -282,6 +310,7 @@ class XoxoGame extends Component {
   }
 
   updatingWaitingMsg() {
+    if (!this.state.pending) return;
     if (_.endsWith(this.state.waitingMsg, ' . . . .')) {
       this.setState({
           waitingMsg: 'Waiting for opponent'
@@ -298,7 +327,7 @@ class XoxoGame extends Component {
     const gameFull = !this.state.pending ? {display: 'inline-block', width: '100%', maxWidth: '400px'} : {display: 'none'};
     const gameEndedStyle = this.state.gameEnded ? {} : {display: 'none'};
     const playerRefusedToRematchStyle = !!this.state.otherPlayerRefused ? {} : {display: 'none'};
-    const decisionMadeStyle = this.state.decisionNum !== '0' ? {} : {display: 'none'};
+    const decisionMadeStyle = this.state.decisionNum !== '0' && !this.state.otherPlayerRefused ? {} : {display: 'none'};
     const rematchModalStyle = this.state.decisionNum !== '0' || this.state.otherPlayerRefused ? {display: 'none'} : {};
     return (
       <div className="xoxo-game">
@@ -307,6 +336,7 @@ class XoxoGame extends Component {
             <div className="col-12 col-sm-3 col-xs-3">
               <h5>Player #1</h5>
               <h5 style={{color: mainGreen}}>{this.state.data.first_player}</h5>
+               <h6 style={{color: mainGreen}}>{this.state.player1Score}</h6>
             </div>
             <div className="col-12 col-sm-6 col-xs-6 form-group">
               <h5>Game #</h5>
@@ -315,6 +345,7 @@ class XoxoGame extends Component {
             <div className="col-12 col-sm-3 col-xs-3">
               <h5>Player #2</h5>
               <h5 style={{color: mainGreen}}>{this.state.data.second_player}</h5>
+              <h6 style={{color: mainGreen}}>{this.state.player2Score}</h6>
             </div>
           </div>
           <div className="row" style={{width: '100%'}}>
@@ -355,7 +386,7 @@ class XoxoGame extends Component {
           <div className="game-is-over" style={gameEndedStyle}>
             <div style={playerRefusedToRematchStyle}>
               <div className="col-12 col-sm-12">
-                <p>The other player doesn't want to rematch.</p>
+                <p className="decision">The other player doesn't want to rematch.</p>
                 <ExitDiv/>
               </div>
             </div>
@@ -368,10 +399,10 @@ class XoxoGame extends Component {
             <div style={rematchModalStyle}>
               <div className="row" style={{marginTop: '10px'}}>
                 <div className="col-12 col-sm-12">
-                  Wanna rematch?
+                  <p className="decision">Wanna rematch?</p>
                 </div>
               </div>
-              <div className="row" style={{marginTop: '20px'}}>
+              <div className="row" style={{marginTop: '10px', marginBottom: '10px'}}>
                 <div className="col-6 col-xs-6">
                   <input type="button" value="Yes" className="btn btn-green" onClick={() => this.updateRematchDecision('1')}/>
                 </div>
@@ -389,14 +420,14 @@ class XoxoGame extends Component {
 
 function DecisionDiv(props) {
   if (props.decision === '1')
-    return ('Waiting for opponent response');
+    return (<p className="decision">Waiting for opponent response</p>);
   else
     return ExitDiv();
 }
 
 function ExitDiv() {
-  const exitLink = `${utils.getServerURL()}/game-xoxo-main`;
-  return (<a href={exitLink} className="btn btn-default">Exit</a>);
+  const exitLink = `${utils.getServerURL()}`;
+  return (<a href={exitLink} className="btn btn-default" style={{marginBottom: '5px'}}>Exit</a>);
 }
 
 export default XoxoGame;

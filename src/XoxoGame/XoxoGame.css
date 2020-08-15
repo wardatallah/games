@@ -58,7 +58,7 @@
 
 .game-is-over {
   width: 300px;
-  height: 120px;
+  /*height: 120px;*/
   border: 1px solid white;
   border-radius: 10px;
   background: rgba(40, 44, 52, 0.95);
@@ -71,6 +71,10 @@
 
 .btn-red {
   background: red;
+}
+
+.decision {
+  font-size: 20px;
 }
 
 @media only screen and (max-width: 768px) {
