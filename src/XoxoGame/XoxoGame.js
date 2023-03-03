@@ -8,6 +8,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import { css } from '@emotion/core';
 import GridLoader from 'react-spinners/GridLoader';
+import Emitter from '../services/emitter';
 
 import _ from 'lodash';
 import './XoxoGame.css';
@@ -60,7 +61,7 @@ class XoxoGame extends Component {
       super(props);
       this.state = {
         data: props.data,
-        turn: props.data.second_player === '-' ? 'X' : 'O',
+        turn: !props.data.second_player ? 'X' : 'O',
         pending: props.data.players_number !== 2,
         myTurn: false,
         player1Score: props.data.player1_score || 0,
@@ -84,6 +85,7 @@ class XoxoGame extends Component {
         this.playerName = props.data.second_player;
       }
    };
+
 
   updateRematchDecision (decisionNum) {
     if (this.playerNumber === 1) {
@@ -120,7 +122,6 @@ class XoxoGame extends Component {
      body: JSON.stringify(data)
     }).then(function(response) {
       return response.json();
-    }).then(function(result) {
     });
   }
 
@@ -150,6 +151,7 @@ class XoxoGame extends Component {
     });
 
     if (!cellUpdated) return;
+    Emitter.emit('player_played', this.playerName);
     self.setState({
       myTurn: false,
     });
