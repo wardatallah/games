@@ -9,6 +9,7 @@ import Paper from '@material-ui/core/Paper';
 import { css } from '@emotion/core';
 import GridLoader from 'react-spinners/GridLoader';
 import Emitter from '../services/emitter';
+import socketIO from "socket.io-client";
 
 import _ from 'lodash';
 import './XoxoGame.css';
@@ -31,6 +32,7 @@ const override = css`
     display: block;
     margin: 0 auto;
 `;
+const socket = socketIO.connect("http://localhost:3000");
 
 function createData(firstCell, secondCell, thirdCell) {
   return {
@@ -84,6 +86,15 @@ class XoxoGame extends Component {
         this.playerNumber = 2;
         this.playerName = props.data.second_player;
       }
+
+      socket.on(`sendUpdates${props.data.id}${props.data.game_number}`, (event) => {
+        event.turn !== this.state.turn && this.refreshData();
+      });
+      socket.emit(`playerJoined`, {
+        id: props.data.id,
+        game_number: props.data.game_number,
+        turn: this.state.turn,
+      });
    };
 
 
@@ -116,11 +127,17 @@ class XoxoGame extends Component {
     if (!!rematchTwo) {
       data.rematchTwo = rematchTwo;
     }
+    const self = this;
     fetch(this.mainUrl + '/xoxo-games/update-game', {
      method: 'post',
      headers: {'Content-Type':'application/json'},
      body: JSON.stringify(data)
     }).then(function(response) {
+      !isNewPlayer && socket.emit("playerPlayed", {
+        turn: self.state.turn,
+        id: self.state.data.id,
+        game_number: self.state.data.game_number,
+      });
       return response.json();
     });
   }
@@ -287,7 +304,6 @@ class XoxoGame extends Component {
   }
 
   componentDidMount() {
-    this.interval = setInterval(() => this.refreshData(), 100);
     if (this.state.pending) {
       this.intervalMsg = setInterval(() => this.updatingWaitingMsg(), 400);
     }
