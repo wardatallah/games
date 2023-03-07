@@ -8,7 +8,6 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import { css } from '@emotion/core';
 import GridLoader from 'react-spinners/GridLoader';
-import Emitter from '../services/emitter';
 import socketIO from "socket.io-client";
 
 import _ from 'lodash';
@@ -168,7 +167,6 @@ class XoxoGame extends Component {
     });
 
     if (!cellUpdated) return;
-    Emitter.emit('player_played', this.playerName);
     self.setState({
       myTurn: false,
     });
